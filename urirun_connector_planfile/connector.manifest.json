@@ -38,14 +38,19 @@
   "a2a": true,
   "routes": [
     "planfile://host/dsl/command/run",
+    "task://host/doctor/query/report",
+    "task://host/ticket/command/archive",
     "task://host/ticket/command/block",
     "task://host/ticket/command/complete",
     "task://host/ticket/command/create",
     "task://host/ticket/command/fail",
     "task://host/ticket/command/ready",
+    "task://host/ticket/command/respond",
     "task://host/ticket/command/start",
     "task://host/ticket/query/next",
+    "task://host/ticket/query/history-links",
     "task://host/ticket/query/show",
+    "task://host/ticket/query/urls",
     "task://host/tickets/query/list"
   ],
   "uriSchemes": [

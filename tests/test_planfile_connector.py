@@ -12,6 +12,7 @@ from urirun_connector_planfile import (
     create_ticket,
     list_tickets,
     main,
+    respond,
     run_dsl,
     urirun_bindings,
 )
@@ -19,16 +20,21 @@ from urirun_connector_planfile import (
 ROUTE_LIST = "task://host/tickets/query/list"
 ROUTE_NEXT = "task://host/ticket/query/next"
 ROUTE_SHOW = "task://host/ticket/query/show"
+ROUTE_URLS = "task://host/ticket/query/urls"
+ROUTE_HISTORY_LINKS = "task://host/ticket/query/history-links"
 ROUTE_CREATE = "task://host/ticket/command/create"
 ROUTE_START = "task://host/ticket/command/start"
 ROUTE_COMPLETE = "task://host/ticket/command/complete"
 ROUTE_FAIL = "task://host/ticket/command/fail"
 ROUTE_BLOCK = "task://host/ticket/command/block"
 ROUTE_READY = "task://host/ticket/command/ready"
+ROUTE_RESPOND = "task://host/ticket/command/respond"
+ROUTE_ARCHIVE = "task://host/ticket/command/archive"
+ROUTE_DOCTOR = "task://host/doctor/query/report"
 ROUTE_DSL = "planfile://host/dsl/command/run"
 ALL_ROUTES = {
-    ROUTE_LIST, ROUTE_NEXT, ROUTE_SHOW, ROUTE_CREATE, ROUTE_START,
-    ROUTE_COMPLETE, ROUTE_FAIL, ROUTE_BLOCK, ROUTE_READY, ROUTE_DSL,
+    ROUTE_LIST, ROUTE_NEXT, ROUTE_SHOW, ROUTE_URLS, ROUTE_HISTORY_LINKS, ROUTE_CREATE, ROUTE_START,
+    ROUTE_COMPLETE, ROUTE_FAIL, ROUTE_BLOCK, ROUTE_READY, ROUTE_RESPOND, ROUTE_ARCHIVE, ROUTE_DOCTOR, ROUTE_DSL,
 }
 
 MODULE = "urirun_connector_planfile.core"
@@ -45,6 +51,11 @@ def test_direct_planfile_operations(tmp_path) -> None:
     assert listed["ok"] is True
     assert listed["tickets"][0]["id"] == ticket_id
 
+    answered = respond(project=str(tmp_path), ticket_id=ticket_id, note="Founder delegated", next_state="in_progress", actor="founder")
+    assert answered["ok"] is True
+    assert answered["ticket"]["status"] == "in_progress"
+    assert answered["ticket"]["outputs"]["notes"] == ["Founder delegated"]
+
     dsl = run_dsl(project=str(tmp_path), command="list tickets sprint=current")
     assert dsl["ok"] is True
     assert dsl["result"]["ok"] is True
@@ -59,12 +70,17 @@ def test_bindings_are_isolated_handlers() -> None:
         (ROUTE_LIST, "list_tickets"),
         (ROUTE_NEXT, "next_ticket"),
         (ROUTE_SHOW, "show_ticket"),
+        (ROUTE_URLS, "ticket_urls"),
+        (ROUTE_HISTORY_LINKS, "ticket_history_links"),
         (ROUTE_CREATE, "create_ticket"),
         (ROUTE_START, "start"),
         (ROUTE_COMPLETE, "complete"),
         (ROUTE_FAIL, "fail"),
         (ROUTE_BLOCK, "block"),
         (ROUTE_READY, "ready"),
+        (ROUTE_RESPOND, "respond"),
+        (ROUTE_ARCHIVE, "archive"),
+        (ROUTE_DOCTOR, "doctor"),
         (ROUTE_DSL, "run_dsl"),
     ):
         # registry-portable handler: runs out-of-process via urirun.exec

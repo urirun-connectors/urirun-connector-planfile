@@ -54,6 +54,13 @@ CONTRACTS: dict[str, Contract] = {
         examples=({"payload": {"ticket_id": "PLF-001"},
                    "result": {"ok": True, "connector": "planfile", "project": ".", "ticket": _TICKET}},)),
 
+    "task://host/ticket/query/urls": _q(
+        {"ticket_id": "str", "urls": "obj"}, inp={"ticket_id": "str", "project": "?str"}),
+
+    "task://host/ticket/query/history-links": _q(
+        {"ticket_id": "str", "urls": "obj", "full_uri_registry_context": "any"},
+        inp={"ticket_id": "str", "project": "?str"}),
+
     "task://host/ticket/command/create": _ticket_cmd(
         {"name": "str", "project": "?str", "description": "?str", "priority": "?str", "labels": "?str",
          "queue": "?str", "prompt": "?str", "executor_handler": "?str", "max_attempts": "?int"},
@@ -74,6 +81,19 @@ CONTRACTS: dict[str, Contract] = {
 
     "task://host/ticket/command/ready": _ticket_cmd(
         {"ticket_id": "str", "project": "?str", "note": "?str"}, {"ticket_id": "PLF-001"}, status="open"),
+
+    "task://host/ticket/command/respond": _ticket_cmd(
+        {"ticket_id": "str", "note": "str", "project": "?str", "next_state": "?str", "actor": "?str",
+         "delegate_to": "?str", "delegate_kind": "?str"},
+        {"ticket_id": "PLF-001", "note": "Accepted"}, status="open"),
+
+    "task://host/ticket/command/archive": _c(
+        {"ticket": "obj", "archived": "const:true"},
+        inp={"ticket_id": "str", "project": "?str", "note": "?str", "reason": "?str", "actor": "?str"}),
+
+    "task://host/doctor/query/report": Contract(
+        version="v1", effect="query", inp={},
+        out={"ok": "const:true", "connector": "const:planfile", "version": "str", "status": "const:ready"}),
 
     "planfile://host/dsl/command/run": _c(
         {"result": "obj"}, inp={"command": "str", "project": "?str"},

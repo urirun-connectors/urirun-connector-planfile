@@ -22,6 +22,7 @@ Routes operate on a project directory:
 * ``task://host/ticket/command/fail``       -- fail a ticket
 * ``task://host/ticket/command/block``      -- block a ticket
 * ``task://host/ticket/command/ready``      -- mark a ticket ready
+* ``task://host/ticket/command/respond``    -- respond and optionally delegate
 * ``planfile://host/dsl/command/run``       -- run planfile DSL
 
 The manifest stays prose-only; ``routes``/``uriSchemes`` are derived from the
@@ -200,6 +201,28 @@ def block(project: str = ".", ticket_id: str = "", note: str = "BLOCKED", reason
 @conn.handler("ticket/command/ready", isolated=True, meta={"label": "Mark ticket ready"})
 def ready(project: str = ".", ticket_id: str = "", note: str = "", reason: str = "", actor: str = "") -> dict[str, Any]:
     return update_status(project, ticket_id, "ready", note=note, reason=reason, actor=actor)
+
+
+@conn.handler("ticket/command/respond", isolated=True, meta={"label": "Respond to and optionally delegate ticket"})
+def respond(project: str = ".", ticket_id: str = "", note: str = "", next_state: str = "ready",
+            actor: str = "", delegate_to: str = "", delegate_kind: str = "") -> dict[str, Any]:
+    if not ticket_id:
+        return urirun.fail("ticket_id is required", connector=CONNECTOR_ID)
+    if not note.strip():
+        return urirun.fail("note is required", connector=CONNECTOR_ID)
+    if next_state not in {"ready", "in_progress"}:
+        return urirun.fail("next_state must be ready or in_progress", connector=CONNECTOR_ID)
+    if delegate_kind and delegate_kind not in {"human", "bot"}:
+        return urirun.fail("delegate_kind must be human or bot", connector=CONNECTOR_ID)
+    ticket = load_planfile(project).respond_ticket(
+        ticket_id,
+        note=note,
+        next_state=next_state,
+        actor=actor or "uri-process",
+        delegate_to=delegate_to or None,
+        delegate_kind=delegate_kind or None,
+    )
+    return {"ok": True, "connector": CONNECTOR_ID, "project": project_root(project), "ticket": ticket_to_dict(ticket)}
 
 
 @conn.handler("ticket/command/archive", isolated=True, meta={"label": "Archive ticket to 'archive' sprint (hides from main dashboard view)"})

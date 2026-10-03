@@ -14,6 +14,7 @@ Routes:
 - `task://host/ticket/command/fail`
 - `task://host/ticket/command/block`
 - `task://host/ticket/command/ready`
+- `task://host/ticket/command/respond`
 - `planfile://host/dsl/command/run`
 
 Install from GitHub:
